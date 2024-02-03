@@ -1,0 +1,289 @@
+====================== DOCKER =========================================
+
+https://github.com/nodeshift/docker
+
+
+
+docker rm $(docker ps -a -q) -f            - удалить все контейнеры Docker
+docker system prune -a --volumes           - удалить  образы, сети, и тома, 
+
+
+
+// узнать где disk image location
+docker info | grep "Docker Root Dir"
+ Docker Root Dir: /var/lib/docker
+
+
+// посмотреть все volumes
+docker volume ls 
+
+// удалить все
+docker volume prune
+
+docker volume rm backend-v2_shard2_data
+
+
+============================================================================================
+
+скачать темлейт Dockerfile
+wget https://raw.githubusercontent.com/NodeShift/docker/main/Dockerfile
+
+
+wget https://raw.githubusercontent.com/NodeShift/docker/main/.dockerignore
+
+
+docker build -t nodeserver -f Dockerfile .
+
+
+// запустить контейнер
+docker run -i -p 3000:3000 -t nodeserver
+
+==============================================================================================================
+
+// Работа с tools
+
+wget https://raw.githubusercontent.com/NodeShift/docker/main/Dockerfile-tools
+wget https://raw.githubusercontent.com/NodeShift/docker/main/run-dev
+wget https://raw.githubusercontent.com/NodeShift/docker/main/run-debug
+
+изменить путь к исполяемому скрипту
+
+docker build -t nodeserver-tools -f Dockerfile-tools .
+
+// для package.json
+docker run -i -v "$PWD"/package.json:/tmp/package.json -v "$PWD"/node_modules_linux:/tmp/node_modules -w /tmp -t node:16 npm install
+
+
+// запустить как dev - при изменении файлов скриптов они будут применяться для проекта автоматически
+docker run -i -p 3000:3000 -v "$PWD"/:/app -v "$PWD"/node_modules_linux:/app/node_modules -t nodeserver-tools /bin/run-dev
+
+// облегченая версия 
+wget https://raw.githubusercontent.com/NodeShift/docker/main/Dockerfile-run
+
+docker build -t nodeserver-run -f Dockerfile-run .
+
+
+docker run -i -p 3000:3000 -t nodeserver-run 
+
+
+
+
+// изменение тэгов
+
+andrew@andrew-System-Product-Name:~/Desktop/it/kuber$ docker images
+REPOSITORY         TAG       IMAGE ID       CREATED         SIZE
+nodeserver-run     latest    5fddf537ab94   2 minutes ago   223MB
+nodeserver-tools   latest    43334320b391   2 hours ago     995MB
+nodeserver         latest    c689bbeada0e   2 hours ago     661MB
+node               16        1ddc7e4055fd   4 months ago    909MB
+
+andrew@andrew-System-Product-Name:~/Desktop/it/kuber$ docker tag nodeserver-run nodeserver:1.0.0
+
+andrew@andrew-System-Product-Name:~/Desktop/it/kuber$ docker images
+REPOSITORY         TAG       IMAGE ID       CREATED         SIZE
+nodeserver-run     latest    5fddf537ab94   4 minutes ago   223MB
+nodeserver         1.0.0     5fddf537ab94   4 minutes ago   223MB
+nodeserver-tools   latest    43334320b391   2 hours ago     995MB
+nodeserver         latest    c689bbeada0e   2 hours ago     661MB
+node               16        1ddc7e4055fd   4 months ago    909MB
+
+
+
+DOCKER CREDOS
+LOGIN: andrew.kapustin@gmail.com
+PASSWORD: Napoleon1703
+
+
+
+
+
+andrew@andrew-System-Product-Name:~/Desktop/it/kuber$ docker images
+REPOSITORY                      TAG       IMAGE ID       CREATED          SIZE
+andrewkapustin1999/nodeserver   1.0.0     5fddf537ab94   22 minutes ago   223MB
+nodeserver-run                  latest    5fddf537ab94   22 minutes ago   223MB
+nodeserver                      1.0.0     5fddf537ab94   22 minutes ago   223MB
+nodeserver-tools                latest    43334320b391   2 hours ago      995MB
+nodeserver                      latest    c689bbeada0e   3 hours ago      661MB
+node                            16        1ddc7e4055fd   4 months ago     909MB
+
+
+
+// удалить 
+docker rmi andrewkapustin1999/nodeserver:1.0.0
+
+
+// сделать pull 
+docker pull andrewkapustin1999/nodeserver:1.0.0
+
+
+docker ps
+CONTAINER ID   IMAGE                                 COMMAND       CREATED             STATUS             PORTS                                                 NAMES
+9f05578f61b1   andrewkapustin1999/nodeserver:1.0.0   "npm start"   About an hour ago   Up About an hour   0.0.0.0:3000->3000/tcp, :::3000->3000/tcp, 8080/tcp   serene_buck
+
+// Чтобы остановить контейнер 
+docker stop 9f05578f61b1
+
+
+
+
+==============================================================================================================
+
+// Посмотреть список команд Kubernetes 
+kubectl
+
+HELM - пакетный менеджер для Kubernetes
+https://helm.sh/docs/intro/install/ --- ссылка на доку
+
+
+https://github.com/nodeshift/helm ---- REPOSITORY
+
+
+
+
+==============================================================================================================
+==============================================================================================================
+==============================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+========================== Установка ==========================
+
+
+===============================================================
+
+
+minikube start --driver=qemu
+
+minikube start              - запустить minikube
+
+kubectl apply -f .          - запустить все файлы в папке
+kubectl apply -f pod.yml    - запустить файл pod.yml
+
+
+kubectl get pods            - посмотреть статус всех запущенных pods
+kubectl get services        - посмотреть сервисы 
+
+minikube ip                 - получить текущий ip minikube
+
+
+kubectl delete pod short-app   - удалить pod short-app
+kubectl delete service short-app-port   - удалить сервис short-app-port
+
+
+kubectl describe service short-app-port - получить детальную инфу про сервис
+kubectl describe pods short-app - получить детельную инфу про под 
+
+
+kubectl apply -f pod.yml                    - обновленеи файла конфигурации 
+
+
+
+
+
+deployment - обеспечивает управленеи несколькими подами, их числом и конфигурацией
+
+
+kubectl apply -f app-deployment.yml                - применить файл деплойманта
+
+kubectl get deployments.apps                       - получить информация по deployments
+kubectl describe deployments.app                   - получить подробную информация по deployments
+
+
+kubectl get all
+
+kubectl delete deployments.apps short-app-deployment
+
+
+сборка докер контейнера -> отправка в hub + смена версии -> 
+
+===============================================================
+
+api-service - файл с описание работы api
+
+
+minikube addons list                    - посмотреть список addons
+minikube addons enable ingress          - включить ingress
+
+
+===============================================================
+
+пробросил порт на текущую машину kubectl
+ 
+
+===============================================================
+
+Volumes
+
+1) Volume - позволяет создать некоторую область которая будет находиться вне контейнера
+
+2) Persistent Volume - ===============================================================
+
+
+
+AccessMode:
+    - ReadWriteOnce - 1 инстенс может использовать
+    - ReadOnlyMany - Несколько инстенсов может читать
+    - ReadWriteMany - Несколько инстенсов может читаь и писать
+
+
+kubectl get persistentvolumeclaims              - для просмотра pvc
+
+
+===============================================================
+
+Секреты
+
+ИМПЕРАТИВНЫЙ
+
+kubectl create secret generic pg-secret --from-literal PASSWORD=my_pass     - создание секрета с паролем
+
+kubectl get secrets
+kubectl describe secrets pg-secret
+kubectl get secrets pg-secret --template={{.data.PASSWORD}} | base64 -d         - получить пароль в расшифрованном виде
+kubectl delete secret pg-secret                                             - удалить секрет pg-secret  
+
+
+
+
+Декларативный 
+kubectl apply -f postgres-secret.yml
+
+echo -n demo | base64                           - сконвертировать сово demo в base64
+
+
+
+
+kubectl port-forward pods/postgres-deployment-5fcb65cb76-wc5wv 5432:5432            - прокинуть порт 
+
+
+
+helm create short-service
+
+
+
+
+kubectl logs pods/postgres-deployment-5fcb65cb76-wc5wv                  - посмотреть логи пода 
